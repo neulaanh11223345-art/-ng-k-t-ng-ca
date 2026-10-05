@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bảng Tổng Hợp Tăng Ca — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f4f7fa;--card:#ffffff;--text:#0f172a;--muted:#64748b;
+  --accent:#1d6fb0;--accent-soft:rgba(29,111,176,.12);
+  --accent2:#c85a3a;--border:rgba(15,23,42,.10);
+  --ok:#0d9669;--ok-soft:rgba(13,150,105,.12);
+  --radius:14px;--shadow:0 1px 3px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.05);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh}
+.app{max-width:1100px;margin:0 auto;padding:16px 14px 60px}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px;flex-wrap:wrap}
+.topbar .logo{width:44px;height:44px;flex:none;border-radius:11px;background:linear-gradient(135deg,var(--accent2),#e07a5f);display:flex;align-items:center;justify-content:center;color:#fff}
+.topbar h1{font-size:17px;margin:0;font-weight:700}
+.topbar p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+.topbar .spacer{flex:1}
+.btn{padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:none;display:inline-flex;align-items:center;gap:7px;transition:transform .1s}
+.btn:active{transform:scale(.97)}
+.btn svg{width:16px;height:16px}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(29,111,176,.3)}
+.btn-ok{background:var(--ok);color:#fff}
+.btn-ghost{background:var(--card);color:var(--muted);border:1.5px solid var(--border)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.stat .lbl{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.stat .val{font-size:26px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums;color:var(--accent)}
+.stat .val small{font-size:13px;font-weight:500;color:var(--muted)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filters input,.filters select{padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit;background:#fff;flex:1;min-width:140px}
+.filters input:focus,.filters select:focus{outline:none;border-color:var(--accent)}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}
+th{background:#f1f5f9;padding:10px 10px;text-align:left;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);border-bottom:2px solid var(--border);position:sticky;top:0;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover td{background:#f8fafc}
+tr.person-row td{background:var(--accent-soft);font-weight:700;color:var(--accent)}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.pill-hc{background:#dbeafe;color:#1e40af}
+.pill-ngay{background:#dcfce7;color:#166534}
+.pill-dem{background:#ede9fe;color:#5b21b6}
+.pill-cn{background:#fee2e2;color:#991b1b}
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty svg{width:48px;height:48px;opacity:.3;margin-bottom:12px}
+.loading{text-align:center;padding:40px;color:var(--muted)}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.config-box{background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;font-size:13px}
+.config-box b{color:#92400e}
+.muted{color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-4 3 3 5-6"/></svg>
+    </div>
+    <div>
+      <h1>Bảng Tổng Hợp Tăng Ca</h1>
+      <p>Công ty TNHH Credible Việt Nam · Dành cho Quản lý / HCNS</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn btn-ghost" id="btnRefresh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Làm mới
+    </button>
+    <button class="btn btn-primary" id="btnExport">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+      Xuất Excel
+    </button>
+  </div>
+
+  <div id="configBox" class="config-box" style="display:none">
+    <b>⚠ Chưa cấu hình link Google Sheets.</b> Vui lòng mở file <code>admin.html</code> bằng trình soạn thảo, tìm dòng <code>var APPS_SCRIPT_URL</code> và dán link Apps Script của bạn vào. Xem file <b>HƯỚNG_DẪN_CAI_DAT.md</b> để biết chi tiết.
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="filters">
+    <input type="text" id="fSearch" placeholder="Tìm theo họ tên, mã thẻ, bộ phận...">
+    <select id="fMonth">
+      <option value="">Tất cả tháng</option>
+    </select>
+    <select id="fDept">
+      <option value="">Tất cả bộ phận</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <div id="loading" class="loading"><div class="spinner"></div>Đang tải dữ liệu...</div>
+    <div id="empty" class="empty" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>
+      <div>Chưa có dữ liệu đăng ký nào.<br><span class="muted">Khi nhân viên bấm "Gửi đăng ký" trên app, dữ liệu sẽ hiện ở đây.</span></div>
+    </div>
+    <table id="dataTable" style="display:none">
+      <thead>
+        <tr>
+          <th>STT</th>
+          <th>Họ tên</th>
+          <th>Mã thẻ</th>
+          <th>Bộ phận</th>
+          <th>Chức vụ</th>
+          <th>Ngày TC</th>
+          <th>Thời gian</th>
+          <th>Số giờ</th>
+          <th>Ca</th>
+          <th>Nội dung</th>
+          <th>Gửi lúc</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================
+     ⚙️  CẤU HÌNH — DÁN LINK GOOGLE APPS SCRIPT VÀO ĐÂY
+     (Cùng link với file index.html)
+     ========================================================= */
+  var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvqZm8YlUNj2X8kFE-La41o0WUnQPMESCQIrm4QZ79QobGIsrb3HNSxMRg8tE1GyIU/exec";
+  /* ========================================================= */
+
+  var $ = function(id){ return document.getElementById(id); };
+  var allRows = []; // flattened: one row per OT entry
+
+  function pillClass(shift){
+    if(shift==="Ca đêm") return "pill-dem";
+    if(shift==="Ca ngày") return "pill-ngay";
+    if(shift==="Chủ nhật") return "pill-cn";
+    return "pill-hc";
+  }
+  function fmtDate(iso){ if(!iso) return ""; var p=iso.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
+  function fmtTime(iso){
+    if(!iso) return "";
+    try{ var d=new Date(iso); return d.toLocaleString("vi-VN",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); }catch(e){ return iso; }
+  }
+
+  function loadData(){
+    $("loading").style.display = "block";
+    $("dataTable").style.display = "none";
+    $("empty").style.display = "none";
+    if(APPS_SCRIPT_URL.indexOf("https://script.google.com/macros/s/AKfycbyvqZm8YlUNj2X8kFE-La41o0WUnQPMESCQIrm4QZ79QobGIsrb3HNSxMRg8tE1GyIU/exec") !== -1){
+      $("configBox").style.display = "block";
+      $("loading").style.display = "none";
+      return;
+    }
+    $("configBox").style.display = "none";
+
+    fetch(APPS_SCRIPT_URL + "?action=list", {method:"GET"})
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        allRows = [];
+        (data.records||[]).forEach(function(rec){
+          (rec.entries||[]).forEach(function(en){
+            allRows.push({
+              submittedAt: rec.submittedAt||"",
+              name: rec.name||"", code: rec.code||"", dept: rec.dept||"", pos: rec.pos||"",
+              date: en.date||"", start: en.start||"", end: en.end||"",
+              hours: parseFloat(en.hours)||0, shift: en.shift||"", reason: en.reason||""
+            });
+          });
+        });
+        allRows.sort(function(a,b){ return (b.submittedAt||"").localeCompare(a.submittedAt||""); });
+        buildFilters();
+        renderStats();
+        renderTable();
+        $("loading").style.display = "none";
+        if(allRows.length===0){ $("empty").style.display = "block"; }
+        else { $("dataTable").style.display = "table"; }
+      })
+      .catch(function(){
+        $("loading").style.display = "none";
+        $("empty").style.display = "block";
+        $("empty").innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><div>Lỗi tải dữ liệu.<br><span class="muted">Kiểm tra link Apps Script và kết nối mạng, rồi bấm "Làm mới".</span></div>';
+      });
+  }
+
+  function buildFilters(){
+    var months = {}, depts = {};
+    allRows.forEach(function(r){
+      if(r.date){ var m = r.date.slice(0,7); months[m]=1; }
+      if(r.dept) depts[r.dept]=1;
+    });
+    var mSel = $("fMonth"), curM = mSel.value;
+    mSel.innerHTML = '<option value="">Tất cả tháng</option>' +
+      Object.keys(months).sort().reverse().map(function(m){
+        var p=m.split("-"); return '<option value="'+m+'"'+(m===curM?' selected':'')+'>Tháng '+p[1]+'/'+p[0]+'</option>';
+      }).join("");
+    var dSel = $("fDept"), curD = dSel.value;
+    dSel.innerHTML = '<option value="">Tất cả bộ phận</option>' +
+      Object.keys(depts).sort().map(function(d){ return '<option value="'+d+'"'+(d===curD?' selected':'')+'>'+d+'</option>'; }).join("");
+  }
+
+  function filtered(){
+    var q = $("fSearch").value.trim().toLowerCase();
+    var m = $("fMonth").value;
+    var d = $("fDept").value;
+    return allRows.filter(function(r){
+      if(m && r.date.slice(0,7)!==m) return false;
+      if(d && r.dept!==d) return false;
+      if(q){
+        var hay = (r.name+" "+r.code+" "+r.dept+" "+r.pos+" "+r.reason).toLowerCase();
+        if(hay.indexOf(q)===-1) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderStats(){
+    var totalHours = allRows.reduce(function(s,r){return s+r.hours;},0);
+    var people = {}; allRows.forEach(function(r){ if(r.name) people[r.name]=1; });
+    var depts = {}; allRows.forEach(function(r){ if(r.dept) depts[r.dept]=1; });
+    var entries = allRows.length;
+    $("stats").innerHTML =
+      '<div class="stat"><div class="lbl">Tổng số giờ</div><div class="val">'+(Math.round(totalHours*10)/10)+'<small>giờ</small></div></div>' +
+      '<div class="stat"><div class="lbl">Số lượt tăng ca</div><div class="val">'+entries+'</div></div>' +
+      '<div class="stat"><div class="lbl">Số người đăng ký</div><div class="val">'+Object.keys(people).length+'</div></div>' +
+      '<div class="stat"><div class="lbl">Số bộ phận</div><div class="val">'+Object.keys(depts).length+'</div></div>';
+  }
+
+  function renderTable(){
+    var rows = filtered();
+    var tbody = $("tbody");
+    tbody.innerHTML = "";
+    // group by person (submission) for readability? keep flat but sorted
+    rows.forEach(function(r, i){
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>"+(i+1)+"</td>"+
+        "<td><b>"+r.name+"</b></td>"+
+        "<td>"+r.code+"</td>"+
+        "<td>"+r.dept+"</td>"+
+        "<td>"+r.pos+"</td>"+
+        "<td>"+fmtDate(r.date)+"</td>"+
+        "<td>"+(r.start&&r.end?r.start+"–"+r.end:"")+"</td>"+
+        "<td><b>"+r.hours+"</b></td>"+
+        '<td><span class="pill '+pillClass(r.shift)+'">'+(r.shift||"—")+'</span></td>'+
+        "<td>"+r.reason+"</td>"+
+        "<td class='muted'>"+fmtTime(r.submittedAt)+"</td>";
+      tbody.appendChild(tr);
+    });
+    if(rows.length===0 && allRows.length>0){
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--muted)">Không có dữ liệu khớp với bộ lọc</td></tr>';
+    }
+  }
+
+  $("fSearch").addEventListener("input", renderTable);
+  $("fMonth").addEventListener("change", renderTable);
+  $("fDept").addEventListener("change", renderTable);
+  $("btnRefresh").addEventListener("click", loadData);
+
+  $("btnExport").addEventListener("click", function(){
+    if(typeof XLSX === "undefined"){ alert("Thư viện Excel chưa tải"); return; }
+    var rows = filtered();
+    if(rows.length===0){ alert("Không có dữ liệu để xuất"); return; }
+    var aoa = [["BẢNG TỔNG HỢP TĂNG CA — CÔNG TY TNHH CREDIBLE VIỆT NAM"]];
+    aoa.push(["Xuất lúc: "+new Date().toLocaleString("vi-VN")]);
+    aoa.push([]);
+    aoa.push(["STT","Họ tên","Mã thẻ","Bộ phận","Chức vụ","Ngày tăng ca","Từ giờ","Đến giờ","Số giờ","Ca làm việc","Nội dung / Lý do","Thời gian gửi"]);
+    rows.forEach(function(r,i){
+      aoa.push([i+1, r.name, r.code, r.dept, r.pos, fmtDate(r.date), r.start, r.end, r.hours, r.shift, r.reason, fmtTime(r.submittedAt)]);
+    });
+    var totalH = rows.reduce(function(s,r){return s+r.hours;},0);
+    aoa.push([]);
+    aoa.push(["","","","","","","TỔNG CỘNG", "", Math.round(totalH*10)/10, "giờ","",""]);
+    var ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:5},{wch:20},{wch:10},{wch:16},{wch:14},{wch:13},{wch:8},{wch:8},{wch:8},{wch:12},{wch:30},{wch:18}];
+    ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:11}},{s:{r:1,c:0},e:{r:1,c:11}}];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "TongHopTangCa");
+    XLSX.writeFile(wb, "TongHop_TangCa_"+new Date().toISOString().slice(0,10)+".xlsx");
+  });
+
+  loadData();
+})();
+</script>
+</body>
+</html>
